@@ -8,7 +8,7 @@
   <link rel="icon" href="assets_icons.jpg" />
   <meta name="theme-color" content="#1976d2" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- Chart.js CDN (محلي خيارياً بوضع ملف في vendor/) -->
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -21,11 +21,11 @@
       </div>
     </header>
 
-    <section id="ad-banner-top" class="ad-banner" aria-hidden="true">
-      <!-- Ad slot top -->
-     <a href="https://example.com" target="_blank">
-     <img src="ad-sample.jpg" alt="إعلان ترحيبي" />
-     </a>
+    <!-- إعلان ترحيبي عند فتح التطبيق -->
+    <section id="ad-banner-top" class="ad-banner" aria-hidden="false">
+      <a href="https://example.com" target="_blank">
+        <img src="ad-sample.jpg" alt="إعلان ترحيبي" />
+      </a>
     </section>
 
     <main>
@@ -78,8 +78,11 @@
       </section>
     </main>
 
-    <section id="ad-banner-bottom" class="ad-banner" aria-hidden="true">
-      <!-- Ad slot bottom -->
+    <!-- إعلان سفلي -->
+    <section id="ad-banner-bottom" class="ad-banner" aria-hidden="false">
+      <a href="https://example.com" target="_blank">
+        <img src="ad-sample.jpg" alt="إعلان سفلي" />
+      </a>
     </section>
 
     <footer>
@@ -99,4 +102,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
