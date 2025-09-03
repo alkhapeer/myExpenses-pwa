@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>إعلان مصاريفي</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="ad-page">
+  <div class="ad-container">
+    <h2>شريكنا</h2>
+    <p>إعلان مرحب — سيتم الانتقال بعد <span id="counter">20</span> ثانية</p>
+
+    <!-- يمكنك وضع فيديو أو صورة هنا -->
+    <div class="ad-media">
+      <!-- مثال: صورة -->
+      <img src="assets/img/ad-sample.jpg" alt="إعلان" />
+    </div>
+
+    <div class="ad-actions">
+      <button id="skipBtn" disabled>تخطي</button>
+    </div>
+  </div>
+
+  <script>
+    const COUNT_START = 20; // أو 30 حسب الإعداد
+    let count = COUNT_START;
+    const counterEl = document.getElementById('counter');
+    const skipBtn = document.getElementById('skipBtn');
+
+    const timer = setInterval(() => {
+      count--;
+      counterEl.textContent = count;
+      if (count <= 0) {
+        clearInterval(timer);
+        skipBtn.disabled = false;
+        skipBtn.textContent = 'انطلق';
+      }
+    }, 1000);
+
+    skipBtn.addEventListener('click', () => {
+      localStorage.setItem('adShown', 'yes');
+      window.location.href = '/';
+    });
+
+    // إذا تم فتحها مسبقًا (حماية):
+    if (localStorage.getItem('adShown')) {
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>
