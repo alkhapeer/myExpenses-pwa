@@ -1,82 +1,158 @@
+
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>مصاريفي | My Expenses</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <meta name="theme-color" content="#1976d2" />
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>💰 مصاريفي</h1>
-      <div class="controls">
-        <button id="langBtn">EN</button>
-        <button id="installBtn" style="display:none;">📲 تثبيت</button>
-      </div>
-    </header>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0ea5e9">
+    <title>My Expenses</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="icon" sizes="192x192" href="./icon-192.png">
+    <link rel="icon" sizes="512x512" href="./icon-512.png">
+    <link rel="stylesheet" href="./styles.css">
+    <!-- Chart.js official (cached by SW) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+    <!-- App scripts (ES modules) -->
+    <script type="module" src="./app.js" defer></script>
+    <script type="module">
+      import { wireInstallButton } from "./install.js";
+      window.addEventListener("DOMContentLoaded", wireInstallButton);
+    </script>
+    <script type="module" src="./service-worker-register.js" defer></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="appTitle">مصروفاتي</h1>
 
-    <section class="summary card">
-      <h3 id="totalToday">اليوم: 0</h3>
-      <h3 id="totalMonth">الشهر: 0 / الباقي: 0</h3>
-      <label>ميزانية شهرية:</label>
-      <input id="budgetInput" type="number" placeholder="2000" />
-      <button id="setBudgetBtn">💾 حفظ</button>
-    </section>
+      <div class="grid">
+        <div class="card">
+          <form id="expenseForm" class="grid grid-2">
+            <div>
+              <label id="labelDate" data-i18n="date">التاريخ</label>
+              <input type="date" id="date" name="date" required>
+            </div>
+            <div>
+              <label id="labelCategory" data-i18n="category">التصنيف</label>
+              <select id="category" name="category" required></select>
+            </div>
+            <div>
+              <label id="labelDesc" data-i18n="description">الوصف</label>
+              <input type="text" id="description" name="description" data-i18n-placeholder="description" placeholder="الوصف">
+            </div>
+            <div>
+              <label id="labelAmount" data-i18n="amount">المبلغ</label>
+              <input type="number" step="0.01" id="amount" name="amount" required>
+            </div>
+            <div>
+              <button class="primary" id="submitBtn" name="submitBtn" type="submit">
+                <span id="submitBtnLabel" data-i18n="add_expense">إضافة مصروف</span>
+              </button>
+            </div>
+            <div>
+              <button class="secondary hidden" id="cancelEdit" type="button" data-i18n="cancel_edit">إلغاء</button>
+            </div>
+          </form>
+        </div>
 
-    <section class="add-expense card">
-      <h2>➕ إضافة مصروف</h2>
-      <form id="expenseForm">
-        <input id="eName" type="text" placeholder="اسم المصروف" required />
-        <input id="eAmount" type="number" placeholder="المبلغ" required />
-        <select id="eCategory"></select>
-        <input id="eDate" type="date" />
-        <button type="submit">إضافة</button>
-      </form>
-      <button id="addCategoryBtn">➕ فئة جديدة</button>
-    </section>
+        <div class="card">
+          <h2 data-i18n="filter">تصفية</h2>
+          <div class="grid grid-2">
+            <input id="q" type="search" data-i18n-placeholder="search" placeholder="بحث">
+            <div>
+              <label data-i18n="from">من</label>
+              <input id="from" type="date">
+            </div>
+            <div>
+              <label data-i18n="to">إلى</label>
+              <input id="to" type="date">
+            </div>
+            <button id="clearFilters" class="secondary" type="button" data-i18n="clear_filters">مسح المرشحات</button>
+          </div>
+        </div>
 
-    <section class="filters card">
-      <h3>🔍 بحث وفلترة</h3>
-      <input id="search" placeholder="بحث..." />
-      <select id="filterCategory"><option value="all">كل الفئات</option></select>
-    </section>
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="date">التاريخ</th>
+                <th data-i18n="category">التصنيف</th>
+                <th data-i18n="description">الوصف</th>
+                <th data-i18n="amount">المبلغ</th>
+                <th id="thActions" data-i18n="actions">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
 
-    <section class="list-and-charts">
-      <div class="list card">
-        <h3>📋 قائمة المصاريف</h3>
-        <ul id="expensesList"></ul>
-      </div>
-      <div class="charts card">
-        <canvas id="pieChart" width="300" height="300"></canvas>
-        <canvas id="barChart" width="300" height="300"></canvas>
-      </div>
-    </section>
+        <div class="card summary">
+          <div class="item">
+            <div class="small" data-i18n="total_today">إجمالي اليوم</div>
+            <div id="sumToday">0</div>
+          </div>
+          <div class="item">
+            <div class="small" data-i18n="total_month">إجمالي الشهر</div>
+            <div id="sumMonth">0</div>
+          </div>
+          <div class="item">
+            <div class="small" data-i18n="top_category">أكثر تصنيف</div>
+            <div id="sumTopCat">—</div>
+          </div>
+        </div>
 
-    <section class="actions card">
-      <button id="exportBtn">📤 نسخ احتياطي</button>
-      <button id="importBtn">📥 استعادة</button>
-      <input type="file" id="importFile" style="display:none;" />
-      <button id="resetBtn">🧹 إعادة تعيين</button>
-    </section>
+        <div class="card">
+          <canvas id="pieChart" height="220"></canvas>
+        </div>
+        <div class="card">
+          <canvas id="barChart" height="220"></canvas>
+        </div>
 
-    <section class="advice card">
-      <h3>💡 نصائح</h3>
-      <p id="adviceText">ابدأ بإضافة مصروفاتك اليومية هنا!</p>
-    </section>
+        <div class="card">
+          <div class="footer">
+            <button id="exportCSV" class="secondary" type="button" data-i18n="export_csv">تصدير CSV</button>
+            <label class="btn" for="importJSON" data-i18n="import_json">استيراد JSON</label>
+            <input id="importJSON" type="file" accept="application/json" class="hidden">
+            <button id="resetAll" class="danger" type="button" data-i18n="reset_all">إعادة التعيين (مسح الكل)</button>
+            <button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled>تثبيت التطبيق</button>
+          </div>
+        </div>
 
-    <footer>
-      <small>© <span id="year"></span> مصاريفي</small>
-    </footer>
-  </div>
+        <div class="card">
+          <h2 data-i18n="settings">الإعدادات</h2>
+          <div class="grid grid-2">
+            <div>
+              <label data-i18n="language">اللغة</label>
+              <select id="langSelect">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="currency">العملة</label>
+              <input id="currencyInput" type="text" maxlength="4" value="﷼">
+            </div>
+            <div>
+              <label data-i18n="budget">الميزانية</label>
+              <input id="budgetInput" type="number" step="0.01">
+            </div>
+            <div>
+              <button id="saveSettings" class="primary" type="button" data-i18n="save">حفظ</button>
+            </div>
+          </div>
+        </div>
 
-  <script src="storage.js"></script>
-  <script src="categories.js"></script>
-  <script src="charts.js"></script>
-  <script src="app.js"></script>
-</body>
+        <!-- Ads banners (optional) -->
+        <div class="banner">Ad banner (optional)</div>
+        <div class="banner">Ad banner (optional)</div>
+
+      </div> <!-- grid -->
+    </div> <!-- container -->
+
+    <script type="module">
+      import { applyLang, getInitialLang } from "./i18n.js";
+      applyLang(localStorage.getItem("lang") || getInitialLang());
+    </script>
+
+  </body>
 </html>

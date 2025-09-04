@@ -1,17 +1,27 @@
-let expenses = [];
 
-function saveData(budget) {
-  const data = { expenses, categories, budget: budget || loadData().budget || 0 };
-  localStorage.setItem("masarefy", JSON.stringify(data));
+// storage.js
+const KEY_EXPENSES = "expenses";
+const KEY_PREFS = "prefs";
+
+export function loadExpenses() {
+  try { return JSON.parse(localStorage.getItem(KEY_EXPENSES) || "[]"); }
+  catch { return []; }
 }
 
-function loadData() {
-  return JSON.parse(localStorage.getItem("masarefy") || "{}");
+export function saveExpenses(arr) {
+  localStorage.setItem(KEY_EXPENSES, JSON.stringify(arr));
 }
 
-(function init() {
-  const data = loadData();
-  expenses = data.expenses || [];
-  categories = data.categories || categories;
-  if (data.budget) document.getElementById("budgetInput").value = data.budget;
-})();
+export function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(KEY_PREFS) || "{}"); }
+  catch { return {}; }
+}
+
+export function savePrefs(p) {
+  localStorage.setItem(KEY_PREFS, JSON.stringify(p));
+}
+
+export function clearAll() {
+  localStorage.removeItem(KEY_EXPENSES);
+  localStorage.removeItem(KEY_PREFS);
+}

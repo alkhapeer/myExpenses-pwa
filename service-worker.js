@@ -1,59 +1,68 @@
-// ======= service-worker.js =======
-const CACHE_VERSION = "v1.0.0";
-const CACHE_NAME = `masarefy-cache-${CACHE_VERSION}`;
 
-const ASSETS = [
+// service-worker.js
+importScripts("./config-sw.js");
+
+const CACHE_NAME = `myexp-${self.CONFIG_SW.CACHE_VERSION}`;
+const CORE = [
   "./",
-  "index.html",
-  "ads.html",
-  "admin.html",
-  "ads-config.json",
-  "privacy.html",
-  "styles.css",
-  "config.js",
-  "i18n.js",
-  "analytics.js",
-  "ads.js",
-  "utils.js",
-  "storage.js",
-  "charts.js",
-  "app.js",
-  "install.js",
-  "manifest.webmanifest",
-  "vendor/chart.min.js",
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./storage.js",
+  "./utils.js",
+  "./i18n.js",
+  "./config.js",
+  "./charts.js",
+  "./analytics.js",
+  "./ads.js",
+  "./categories.js",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
-const NETWORK_ONLY_HOSTS = [
-  "googletagmanager.com",
-  "google-analytics.com",
-  "googlesyndication.com",
-  "doubleclick.net",
-  "adsterra",
-  "propellerads",
-  "profitablecpmgate",
-];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+self.addEventListener("install", (e) => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE)));
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => k!==CACHE_NAME && caches.delete(k))))
-  );
+self.addEventListener("activate", (e) => {
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k.startsWith("myexp-") && k !== CACHE_NAME).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  if (NETWORK_ONLY_HOSTS.some(h => url.hostname.includes(h))) {
-    return; // network-only
+const ANALYTICS_HOSTS = ["www.googletagmanager.com", "www.google-analytics.com", "pagead2.googlesyndication.com"];
+
+self.addEventListener("fetch", (e) => {
+  const url = new URL(e.request.url);
+  if (ANALYTICS_HOSTS.includes(url.hostname)) return; // don't cache
+
+  if (e.request.mode === "navigate") {
+    e.respondWith((async () => {
+      try {
+        const net = await fetch(e.request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(e.request, net.clone());
+        return net;
+      } catch {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match("./index.html");
+        return cached || Response.error();
+      }
+    })());
+    return;
   }
-  event.respondWith(
-    caches.match(event.request).then(res => res || fetch(event.request).then(r => r).catch(() => {
-      if(event.request.mode === "navigate") return caches.match("index.html");
-      return new Response("", {status: 200});
-    }))
-  );
+
+  // Stale-While-Revalidate for static
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(e.request);
+    const fetchPromise = fetch(e.request).then(net => {
+      cache.put(e.request, net.clone());
+      return net;
+    }).catch(() => cached);
+    return cached || fetchPromise;
+  })());
 });
