@@ -1,25 +1,15 @@
-function formatCurrency(val){
-  return `${val.toLocaleString()} ${window.APP_CONFIG.CURRENCY_SYMBOL || ''}`;
+function fmtCurrency(value, currencyCode) {
+  if (currencyCode === "EGP" || currencyCode === "ج.م") {
+    // Egyptian pounds show currency symbol ج.م
+    try {
+      return new Intl.NumberFormat('ar-EG', { style: 'currency', currency: 'EGP', maximumFractionDigits:2 }).format(value);
+    } catch(e){}
+  }
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode, maximumFractionDigits:2 }).format(value);
+  } catch(e){
+    return value + " " + (currencyCode || '');
+  }
 }
-
-function toast(msg, timeout=2000){
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  Object.assign(t.style, {
-    position:'fixed',right:10,bottom:10,background:'#333',color:'#fff',padding:'8px 12px',borderRadius:'6px',zIndex:9999
-  });
-  document.body.appendChild(t);
-  setTimeout(()=> t.remove(), timeout);
-}
-
-function downloadCSV(filename, rows){
-  const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-}
+function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function monthKey(d=new Date()){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
