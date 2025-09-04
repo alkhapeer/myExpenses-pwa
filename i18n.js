@@ -1,23 +1,47 @@
-const I18N = {
+// ====================
+// 📌 i18n.js
+// ====================
+
+const translations = {
   ar: {
-    title: "مصاريفي",
-    addTitle: "إضافة مصروف",
+    addExpense: "إضافة مصروف",
     listTitle: "قائمة المصاريف",
-    // ... أضف نصوصاً أخرى حسب الحاجة
+    today: "اليوم",
+    month: "الشهر",
+    budget: "ميزانية شهرية",
+    save: "حفظ",
+    reset: "إعادة تعيين",
+    export: "تصدير",
+    advice: "نصائح",
   },
   en: {
-    title: "My Expenses",
-    addTitle: "Add expense",
-    listTitle: "Expenses list",
+    addExpense: "Add Expense",
+    listTitle: "Expenses List",
+    today: "Today",
+    month: "Month",
+    budget: "Monthly Budget",
+    save: "Save",
+    reset: "Reset",
+    export: "Export",
+    advice: "Advice",
   }
 };
 
-function applyLanguage(lang){
-  document.documentElement.lang = (lang === 'ar') ? 'ar' : 'en';
-  document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
-  document.getElementById('app-title').textContent = I18N[lang].title;
-  document.getElementById('addTitle').textContent = I18N[lang].addTitle;
-  document.getElementById('listTitle').textContent = I18N[lang].listTitle;
-  // زر اللغة
-  document.getElementById('langBtn').textContent = (lang === 'ar') ? 'EN' : 'AR';
+let currentLang = "ar";
+const langBtn = document.getElementById("langBtn");
+
+langBtn.addEventListener("click", () => {
+  currentLang = currentLang === "ar" ? "en" : "ar";
+  applyTranslations();
+});
+
+function applyTranslations() {
+  const t = translations[currentLang];
+  document.getElementById("addTitle").textContent = t.addExpense;
+  document.getElementById("listTitle").textContent = t.listTitle;
+  document.getElementById("setBudgetBtn").textContent = t.save;
+  document.getElementById("resetBtn").textContent = t.reset;
+  document.getElementById("exportBtn").textContent = t.export;
+  document.getElementById("app-title").textContent = currentLang === "ar" ? "مصاريفي" : "My Expenses";
+  langBtn.textContent = currentLang === "ar" ? "EN" : "AR";
 }
