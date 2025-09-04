@@ -94,14 +94,15 @@ function bindEvents(){
       if (state.editingId){
         const i = state.expenses.findIndex(x=>x.id===state.editingId);
         if (i>=0) state.expenses[i] = payload;
+        if (state.editingId){
+        const i = state.expenses.findIndex(x=>x.id===state.editingId);
+        if (i>=0) state.expenses[i] = payload;
         state.editingId = null;
-        if (submitBtn) submitBtn.querySelector("#submitBtnLabel").textContent = t("add_expense");
-        if (cancelEditBtn) cancelEditBtn.classList.add("hidden");
-      }else{
+          // رجّع زر الإضافة لوضعه الطبيعي وأخفِ زر الإلغاء
+        } else {
         state.expenses.push(payload);
-        gaEvent("expense_add");
-      }
-      saveExpenses(state.expenses);
+        }
+        saveExpenses(state.expenses);
       form.reset(); form.date.value = todayISO();
       // clear search to show the newly added row
       const q = document.getElementById("q"); if (q) q.value = ""; state.filters.q = "";
