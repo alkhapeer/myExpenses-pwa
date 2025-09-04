@@ -1,9 +1,17 @@
-const STORAGE_KEY = "masarefy.v1";
+let expenses = [];
 
-function saveAll(state){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function saveData(budget) {
+  const data = { expenses, categories, budget: budget || loadData().budget || 0 };
+  localStorage.setItem("masarefy", JSON.stringify(data));
 }
-function loadAll(){
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
-  catch(e){ return {}; }
+
+function loadData() {
+  return JSON.parse(localStorage.getItem("masarefy") || "{}");
 }
+
+(function init() {
+  const data = loadData();
+  expenses = data.expenses || [];
+  categories = data.categories || categories;
+  if (data.budget) document.getElementById("budgetInput").value = data.budget;
+})();

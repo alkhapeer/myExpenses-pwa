@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>لوحة إدارة الإعلانات • مصاريفي</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0ea5e9">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">لوحة إدارة الإعلانات — مصاريفي</div>
+    <div class="actions">
+      <a href="index.html" class="btn small">← التطبيق</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h3>المزوّد العام</h3>
+      <div class="row">
+        <label>Provider:</label>
+        <select id="provider">
+          <option value="adsense">AdSense</option>
+          <option value="propeller">PropellerAds</option>
+          <option value="adsterra">Adsterra</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>AdSense</h3>
+      <div class="row">
+        <input id="adsense_client" placeholder="ADSENSE client (ca-pub-...)" style="min-width: 260px">
+        <input id="adsense_slot_top" placeholder="Slot Top">
+        <input id="adsense_slot_bottom" placeholder="Slot Bottom">
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>PropellerAds</h3>
+      <div class="row">
+        <input id="propeller_script_src" placeholder="Script URL">
+        <input id="propeller_zone" placeholder="data-zone (اختياري)">
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Adsterra</h3>
+      <div class="row">
+        <input id="adsterra_script_src" placeholder="Script URL">
+        <input id="adsterra_zone" placeholder="Zone (اختياري)">
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>العناصر</h3>
+      <div class="row">
+        <label class="switch"><input type="checkbox" id="splash_enabled"><span></span></label>
+        <span>Splash Enabled</span>
+        <input id="splash_seconds" type="number" min="10" max="60" value="20" style="width:100px">
+      </div>
+      <div class="row">
+        <label class="switch"><input type="checkbox" id="banner_top_enabled"><span></span></label>
+        <span>بنر أعلى</span>
+        <label class="switch"><input type="checkbox" id="banner_bottom_enabled"><span></span></label>
+        <span>بنر أسفل</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>حفظ / تصدير</h3>
+      <div class="row">
+        <button id="saveLocal" class="btn">حفظ محليًا (LocalStorage)</button>
+        <button id="exportJson" class="btn">تصدير JSON</button>
+        <label class="btn">
+          استيراد JSON
+          <input type="file" id="importFile" accept="application/json" style="display:none">
+        </label>
+      </div>
+      <p style="color: var(--muted); font-size:14px">
+        بعد التعديل النهائي، صدّر الملف ثم ارفعه مكان <code>ads-config.json</code> في الاستضافة (Netlify أو Vercel).
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>© 2025 — مصاريفي | My Expenses</small>
+  </footer>
+
+  <script>
+    const LS_KEY = 'me_ads_config';
+
+    async function loadConfig(){
+      // 1) Local override
+      try{
+        const local = localStorage.getItem(LS_KEY);
+        if(local){ return JSON.parse(local); }
+      }catch(e){}
+      // 2) Remote file
+      try{
+        const r = await fetch('ads-config.json', {cache:'no-cache'});
+        if(r.ok){ return await r.json(); }
+      }catch(e){}
+      // 3) Fallback
+      return {
+        provider:'none',
+        adsense:{client:'',slot_top:'',slot_bottom:''},
+        propeller:{script_src:'',data_zone:''},
+        adsterra:{script_src:'',zone:''},
+        splash:{enabled:true,seconds:20},
+        banners:{top:{enabled:true},bottom:{enabled:true}}
+      };
+    }
+
+    function bind(cfg){
+      document.getElementById('provider').value = cfg.provider||'none';
+      document.getElementById('adsense_client').value = cfg.adsense?.client||'';
+      document.getElementById('adsense_slot_top').value = cfg.adsense?.slot_top||'';
+      document.getElementById('adsense_slot_bottom').value = cfg.adsense?.slot_bottom||'';
+      document.getElementById('propeller_script_src').value = cfg.propeller?.script_src||'';
+      document.getElementById('propeller_zone').value = cfg.propeller?.data_zone||'';
+      document.getElementById('adsterra_script_src').value = cfg.adsterra?.script_src||'';
+      document.getElementById('adsterra_zone').value = cfg.adsterra?.zone||'';
+      document.getElementById('splash_enabled').checked = !!(cfg.splash?.enabled);
+      document.getElementById('splash_seconds').value = cfg.splash?.seconds||20;
+      document.getElementById('banner_top_enabled').checked = !!(cfg.banners?.top?.enabled);
+      document.getElementById('banner_bottom_enabled').checked = !!(cfg.banners?.bottom?.enabled);
+    }
+
+    function collect(){
+      return {
+        provider: document.getElementById('provider').value,
+        adsense: {
+          client: document.getElementById('adsense_client').value.trim(),
+          slot_top: document.getElementById('adsense_slot_top').value.trim(),
+          slot_bottom: document.getElementById('adsense_slot_bottom').value.trim()
+        },
+        propeller: {
+          script_src: document.getElementById('propeller_script_src').value.trim(),
+          data_zone: document.getElementById('propeller_zone').value.trim()
+        },
+        adsterra: {
+          script_src: document.getElementById('adsterra_script_src').value.trim(),
+          zone: document.getElementById('adsterra_zone').value.trim()
+        },
+        splash: {
+          enabled: document.getElementById('splash_enabled').checked,
+          seconds: Number(document.getElementById('splash_seconds').value||20)
+        },
+        banners: {
+          top: { enabled: document.getElementById('banner_top_enabled').checked },
+          bottom: { enabled: document.getElementById('banner_bottom_enabled').checked }
+        }
+      };
+    }
+
+    function download(filename, text){
+      const blob = new Blob([text], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.style.display='none';
+      document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(url); a.remove();},0);
+    }
+
+    document.getElementById('saveLocal').onclick = ()=>{
+      const cfg = collect();
+      localStorage.setItem(LS_KEY, JSON.stringify(cfg));
+      alert('تم الحفظ محليًا. للتطبيق على الزوار: صدّر الملف وارفعه مكان ads-config.json.');
+    };
+    document.getElementById('exportJson').onclick = ()=>{
+      const cfg = collect();
+      download('ads-config.json', JSON.stringify(cfg, null, 2));
+    };
+    document.getElementById('importFile').onchange = async (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const txt = await f.text();
+      try{
+        const cfg = JSON.parse(txt);
+        bind(cfg);
+      }catch(err){
+        alert('ملف غير صالح');
+      }
+    };
+
+    loadConfig().then(bind);
+  </script>
+</body>
+</html>
