@@ -4,7 +4,7 @@ import { CONFIG } from "./config.js";
 import { i18nDict, getInitialLang, applyLang, t } from "./i18n.js";
 import { uid, formatCurrency, todayISO, parseISO, download } from "./utils.js";
 import { loadExpenses, saveExpenses, loadPrefs, savePrefs, clearAll } from "./storage.js";
-import { DEFAULT_CATEGORIES } from "./categories.js";
+import { CATEGORIES, catLabel } from "./categories.js";
 import { renderCharts } from "./charts.js";
 import { initGA, gaEvent } from "./analytics.js";
 import { initAds } from "./ads.js";
@@ -46,6 +46,12 @@ function bindEvents() {
   document.getElementById("langSelect").addEventListener("change", (e) => {
     state.lang = e.target.value;
     applyLang(state.lang);
+    // refresh category labels
+    const sel = document.getElementById("category");
+    const current = sel.value;
+    sel.innerHTML = "";
+    CATEGORIES.forEach(c => { const opt = document.createElement("option"); opt.value = c.id; opt.textContent = catLabel(c.id, state.lang); sel.appendChild(opt); });
+    if (current) sel.value = current;
     renderAll();
   });
 
@@ -65,7 +71,7 @@ function bindEvents() {
     const payload = {
       id: state.editingId || uid(),
       date: form.date.value,
-      category: form.category.value,
+      categoryId: form.category.value,
       description: form.description.value.trim(),
       amount: Number(form.amount.value || 0)
     };
@@ -130,16 +136,12 @@ function bindEvents() {
   });
 
   // Export / Import
-  document.getElementById("exportCSV").addEventListener("click", ()=>{
-    const rows = [["Date","Category","Description","Amount"]];
-    getFiltered().forEach(e=> rows.push([e.date, e.category, e.description, e.amount]));
+      getFiltered().forEach(e=> rows.push([e.date, e.category, e.description, e.amount]));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
     download(`expenses-${new Date().toISOString().slice(0,10)}.csv`, csv);
   });
 
-  document.getElementById("importJSON").addEventListener("change", (e)=>{
-    const file = e.target.files[0];
-    if (!file) return;
+      if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -185,7 +187,7 @@ function startEdit(id) {
   state.editingId = id;
   const form = document.getElementById("expenseForm");
   form.date.value = item.date;
-  form.category.value = item.category;
+  form.category.value = item.categoryId;
   form.description.value = item.description;
   form.amount.value = item.amount;
   form.submitBtn.textContent = t("update_expense");
@@ -199,7 +201,7 @@ function getFiltered() {
   if (q) {
     arr = arr.filter(x =>
       (x.description||"").toLowerCase().includes(q) ||
-      (x.category||"").toLowerCase().includes(q)
+      (catLabel(x.categoryId, state.lang).toLowerCase().includes(q)
     );
   }
   if (from) {
@@ -220,10 +222,10 @@ function summarize(arr) {
   const today = arr.filter(x => x.date === todayStr).reduce((s,x) => s + Number(x.amount||0), 0);
   const ym = new Date().toISOString().slice(0,7);
   const month = arr.filter(x => x.date.startsWith(ym)).reduce((s,x) => s + Number(x.amount||0), 0);
-  const byCat = arr.reduce((acc,e)=>{ acc[e.category]=(acc[e.category]||0)+Number(e.amount||0); return acc; },{});
+  const byCat = arr.reduce((acc,e)=>{ acc[e.categoryId]=(acc[e.categoryId]||0)+Number(e.amount||0); return acc; },{});
   let topCat = t("no_data");
   if (Object.keys(byCat).length) {
-    topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0][0];
+    topCat = catLabel(Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0][0], state.lang);
   }
   return { today, month, topCat };
 }
@@ -246,7 +248,7 @@ function renderAll() {
     tr.setAttribute("data-id", e.id);
     tr.innerHTML = `
       <td>${e.date}</td>
-      <td>${e.category}</td>
+      <td>${catLabel(e.categoryId, state.lang)}</td>
       <td>${e.description || ""}</td>
       <td>${formatCurrency(e.amount, state.prefs.currency)}</td>
       <td>
@@ -270,9 +272,11 @@ function renderAll() {
 window.addEventListener("DOMContentLoaded", () => {
   // Fill categories
   const sel = document.getElementById("category");
-  DEFAULT_CATEGORIES.forEach(c => {
+  sel.innerHTML = "";
+  CATEGORIES.forEach(c => {
     const opt = document.createElement("option");
-    opt.value = opt.textContent = c;
+    opt.value = c.id;
+    opt.textContent = catLabel(c.id, state.lang);
     sel.appendChild(opt);
   });
   init();

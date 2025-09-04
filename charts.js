@@ -1,6 +1,7 @@
 
 // charts.js
 import { t } from "./i18n.js";
+import { catLabel } from "./categories.js";
 
 let pieChart, barChart;
 export function renderCharts(expenses) {
@@ -11,10 +12,11 @@ export function renderCharts(expenses) {
   if (!hasChart || !pieEl || !barEl) return;
 
   const byCategory = expenses.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + Number(e.amount || 0);
+    acc[e.categoryId] = (acc[e.categoryId] || 0) + Number(e.amount || 0);
     return acc;
   }, {});
-  const catLabels = Object.keys(byCategory);
+  const lang = localStorage.getItem("lang") || "ar";
+  const catLabels = Object.keys(byCategory).map(id => catLabel(id, lang));
   const catValues = Object.values(byCategory);
 
   const byMonth = expenses.reduce((acc, e) => {

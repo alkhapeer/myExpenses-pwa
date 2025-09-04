@@ -16,9 +16,9 @@ window.addEventListener('appinstalled', () => {
 
 export function wireInstallButton() {
   const btn = document.getElementById("btnInstall");
-  if (!btn) return;
+  if (!btn) return; btn.title = "Install is offered by the browser when eligible";
   btn.addEventListener("click", async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) { alert("التثبيت متاح فقط عندما يعرضه المتصفح. جرّب من هاتف أندرويد/كروم مع اتصال HTTPS."); return; }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     deferredPrompt = null;
