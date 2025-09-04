@@ -1,89 +1,72 @@
 <!doctype html>
-<html lang="ar" dir="auto">
+<html lang="ar" dir="rtl">
 <head>
-  <base href="./">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>مصاريفي | My Expenses</title>
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" href="none" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
   <meta name="theme-color" content="#1976d2" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div id="app" class="container">
+  <div class="container">
     <header>
-      <h1 id="app-title">مصاريفي</h1>
+      <h1>💰 مصاريفي</h1>
       <div class="controls">
         <button id="langBtn">EN</button>
-        <button id="installBtn" style="display:none;">📲 ثبّت التطبيق</button>
+        <button id="installBtn" style="display:none;">📲 تثبيت</button>
       </div>
     </header>
 
-    <!-- إعلان ترحيبي عند فتح التطبيق -->
-    <section id="ad-banner-top" class="ad-banner" aria-hidden="false">
-      <a href="https://example.com" target="_blank">
-        <img src="none" alt="إعلان ترحيبي" />
-      </a>
+    <section class="summary card">
+      <h3 id="totalToday">اليوم: 0</h3>
+      <h3 id="totalMonth">الشهر: 0 / الباقي: 0</h3>
+      <label>ميزانية شهرية:</label>
+      <input id="budgetInput" type="number" placeholder="2000" />
+      <button id="setBudgetBtn">💾 حفظ</button>
     </section>
 
-    <main>
-      <section class="summary">
-        <div>
-          <h3 id="totalToday">اليوم: 0</h3>
-          <h3 id="totalMonth">الشهر: 0</h3>
-        </div>
-        <div>
-          <label>ميزانية شهرية:</label>
-          <input id="budgetInput" type="number" placeholder="مثلاً 2000" />
-          <button id="setBudgetBtn">حفظ</button>
-        </div>
-      </section>
+    <section class="add-expense card">
+      <h2>➕ إضافة مصروف</h2>
+      <form id="expenseForm">
+        <input id="eName" type="text" placeholder="اسم المصروف" required />
+        <input id="eAmount" type="number" placeholder="المبلغ" required />
+        <select id="eCategory"></select>
+        <input id="eDate" type="date" />
+        <button type="submit">إضافة</button>
+      </form>
+      <button id="addCategoryBtn">➕ فئة جديدة</button>
+    </section>
 
-      <section class="add-expense">
-        <h2 id="addTitle">إضافة مصروف</h2>
-        <form id="expenseForm">
-          <input id="eName" type="text" placeholder="اسم المصروف" required />
-          <input id="eAmount" type="number" placeholder="المبلغ" required />
-          <select id="eCategory">
-            <option value="food">طعام</option>
-            <option value="transport">مواصلات</option>
-            <option value="bills">فواتير</option>
-            <option value="shopping">تسوق</option>
-            <option value="other">أخرى</option>
-          </select>
-          <input id="eDate" type="date" />
-          <button type="submit">أضف</button>
-        </form>
-      </section>
+    <section class="filters card">
+      <h3>🔍 بحث وفلترة</h3>
+      <input id="search" placeholder="بحث..." />
+      <select id="filterCategory"><option value="all">كل الفئات</option></select>
+    </section>
 
-      <section class="list-and-charts">
-        <div class="list">
-          <h3 id="listTitle">قائمة المصاريف</h3>
-          <input id="search" placeholder="بحث..." />
-          <ul id="expensesList"></ul>
-        </div>
+    <section class="list-and-charts">
+      <div class="list card">
+        <h3>📋 قائمة المصاريف</h3>
+        <ul id="expensesList"></ul>
+      </div>
+      <div class="charts card">
+        <canvas id="pieChart" width="300" height="300"></canvas>
+        <canvas id="barChart" width="300" height="300"></canvas>
+      </div>
+    </section>
 
-        <div class="charts">
-          <canvas id="pieChart" width="300" height="300"></canvas>
-          <canvas id="barChart" width="300" height="300"></canvas>
-        </div>
-      </section>
+    <section class="actions card">
+      <button id="exportBtn">📤 نسخ احتياطي</button>
+      <button id="importBtn">📥 استعادة</button>
+      <input type="file" id="importFile" style="display:none;" />
+      <button id="resetBtn">🧹 إعادة تعيين</button>
+    </section>
 
-      <section class="actions">
-        <button id="exportBtn">تصدير CSV</button>
-        <button id="resetBtn">إعادة تعيين</button>
-        <a href="privacy.html" target="_blank">الخصوصية</a>
-      </section>
-    </main>
-
-    <!-- إعلان سفلي -->
-    <section id="ad-banner-bottom" class="ad-banner" aria-hidden="false">
-      <a href="https://example.com" target="_blank">
-        <img src="ad-sample.jpg" alt="إعلان سفلي" />
-      </a>
+    <section class="advice card">
+      <h3>💡 نصائح</h3>
+      <p id="adviceText">ابدأ بإضافة مصروفاتك اليومية هنا!</p>
     </section>
 
     <footer>
@@ -91,16 +74,9 @@
     </footer>
   </div>
 
-  <!-- إضافات JS -->
-  <script src="config.js"></script>
-  <script src="i18n.js"></script>
-  <script src="utils.js"></script>
   <script src="storage.js"></script>
-  <script src="analytics.js"></script>
-  <script src="ads.js"></script>
+  <script src="categories.js"></script>
   <script src="charts.js"></script>
-  <script src="install.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
-

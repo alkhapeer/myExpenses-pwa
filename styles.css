@@ -1,25 +1,44 @@
-:root{
-  --primary:#1976d2;
-  --bg:#f7f9fc;
-  --text:#222;
+body {
+  font-family: "Cairo", sans-serif;
+  background: #f5f7fa;
+  color: #333;
+  margin: 0;
+  padding: 0;
 }
-*{box-sizing:border-box}
-body{font-family:system-ui,Segoe UI,Roboto,"Noto Kufi Arabic",sans-serif;margin:0;background:var(--bg);color:var(--text)}
-.container{max-width:980px;margin:0 auto;padding:16px}
-header{display:flex;justify-content:space-between;align-items:center}
-.controls button{margin-left:8px}
-.ad-banner{min-height:60px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;margin:12px 0}
-.summary{display:flex;justify-content:space-between;padding:12px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.add-expense, .list-and-charts{margin-top:12px;background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.add-expense form{display:flex;gap:8px;flex-wrap:wrap}
-.add-expense input, .add-expense select{padding:8px;border:1px solid #ddd;border-radius:6px;min-width:120px}
-.add-expense button{background:var(--primary);color:white;border:none;padding:8px 12px;border-radius:6px}
-.list{width:48%;display:inline-block;vertical-align:top}
-.charts{width:48%;display:inline-block;vertical-align:top}
-.list ul{list-style:none;padding:0;margin:8px 0}
-.list li{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #f0f0f0}
-.actions{margin-top:12px;display:flex;gap:8px}
-footer{text-align:center;margin:16px 0;color:#666}
-.ad-page{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(180deg,#fff,#f2f6fb)}
-.ad-container{max-width:480px;text-align:center;background:#fff;padding:20px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
-.ad-media img{max-width:100%;border-radius:6px}
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 1rem;
+}
+header, footer {
+  text-align: center;
+  padding: 1rem;
+  background: #1976d2;
+  color: #fff;
+  border-radius: 10px;
+}
+.card {
+  background: #fff;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+button {
+  padding: 0.5rem 1rem;
+  margin: 0.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #1976d2;
+  color: white;
+}
+button:hover {
+  background: #0d47a1;
+}
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
