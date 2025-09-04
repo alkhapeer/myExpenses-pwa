@@ -1,36 +1,12 @@
-function initAds(){
-  const provider = window.APP_CONFIG.ADS_PROVIDER || 'none';
-  if(provider === 'none') return;
-  if(provider === 'adsense'){
-    // Load AdSense script
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-    s.setAttribute('data-ad-client', window.APP_CONFIG.ADSENSE_CLIENT_ID || '');
-    document.head.appendChild(s);
-
-    // Insert ad slots (simple example)
-    const top = document.getElementById('ad-banner-top');
-    const bottom = document.getElementById('ad-banner-bottom');
-    top.innerHTML = `<ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="${window.APP_CONFIG.ADSENSE_CLIENT_ID}"
-         data-ad-slot="${window.APP_CONFIG.ADSENSE_SLOT_BANNER_TOP}"
-         data-ad-format="auto"></ins>`;
-    bottom.innerHTML = `<ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="${window.APP_CONFIG.ADSENSE_CLIENT_ID}"
-         data-ad-slot="${window.APP_CONFIG.ADSENSE_SLOT_BANNER_BOTTOM}"
-         data-ad-format="auto"></ins>`;
-    (adsbygoogle = window.adsbygoogle || []).push({});
-  }
-
-  if(provider === 'propeller'){
-    // propeller sample loader (ضع كود المزود)
-    // تأكد من إضافة zone id في config.js
-  }
-
-  if(provider === 'adsterra'){
-    // adsterra sample loader (ضع كود المزود)
-  }
-}
+(function(){
+  const ads = (APP_CONFIG.ADS || []).filter(a=>a && a.img);
+  if(!ads.length) return;
+  const imgEl = document.getElementById("adImage");
+  const linkEl = document.getElementById("adLink");
+  const dots = document.getElementById("adDots");
+  let i = 0;
+  function renderDots(){ dots.innerHTML = ""; ads.forEach((_,idx)=>{ const s=document.createElement("span"); if(idx===i) s.classList.add("active"); dots.appendChild(s); });}
+  function show(idx){ const a = ads[idx]; imgEl.src = a.img; linkEl.href = a.href || "#"; i = idx; renderDots(); }
+  renderDots(); show(0);
+  setInterval(()=> show((i+1)%ads.length), APP_CONFIG.ADS_ROTATE_MS || 6000);
+})();
