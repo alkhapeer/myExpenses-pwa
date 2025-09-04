@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ar" dir="rtl">
   <head>
@@ -11,9 +10,9 @@
     <link rel="icon" sizes="192x192" href="./icon-192.png">
     <link rel="icon" sizes="512x512" href="./icon-512.png">
     <link rel="stylesheet" href="./styles.css">
-    <!-- Chart.js official (cached by SW) -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
-    <!-- App scripts (ES modules) -->
+    <!-- App -->
     <script type="module" src="./app.js" defer></script>
     <script type="module">
       import { wireInstallButton } from "./install.js";
@@ -24,6 +23,9 @@
   <body>
     <div class="container">
       <h1 id="appTitle">مصروفاتي</h1>
+      <div class="topbar">
+        <button id="openSettings" class="secondary" type="button" data-i18n="settings">الإعدادات</button>
+      </div>
 
       <div class="grid">
         <div class="card">
@@ -34,7 +36,7 @@
             </div>
             <div>
               <label id="labelCategory" data-i18n="category">التصنيف</label>
-              <select id="category" name="category" required></select>
+              <input type="text" id="category" name="category" data-i18n-placeholder="category" placeholder="التصنيف" required>
             </div>
             <div>
               <label id="labelDesc" data-i18n="description">الوصف</label>
@@ -45,7 +47,7 @@
               <input type="number" step="0.01" id="amount" name="amount" required>
             </div>
             <div>
-              <button class="primary" id="submitBtn" name="submitBtn" type="submit">
+              <button class="primary" id="submitBtn" type="submit">
                 <span id="submitBtnLabel" data-i18n="add_expense">إضافة مصروف</span>
               </button>
             </div>
@@ -101,47 +103,52 @@
           </div>
         </div>
 
-        <div class="card">
-          <canvas id="pieChart" height="220"></canvas>
-        </div>
-        <div class="card">
-          <canvas id="barChart" height="220"></canvas>
-        </div>
-
-        <div class="card"><div class="footer"><button id="resetAll" class="danger" type="button" data-i18n="reset_all">إعادة التعيين (مسح الكل)</button><button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled>تثبيت التطبيق</button></div></div>
+        <div class="card"><canvas id="pieChart" height="120"></canvas></div>
+        <div class="card"><canvas id="barChart" height="120"></canvas></div>
 
         <div class="card">
-          <h2 data-i18n="settings">الإعدادات</h2>
-          <div class="grid grid-2">
-            <div>
-              <label data-i18n="language">اللغة</label>
-              <select id="langSelect">
-                <option value="ar">العربية</option>
-                <option value="en">English</option>
-              </select>
-            </div>
-            <div>
-              <label data-i18n="currency">العملة</label>
-              <input id="currencyInput" type="text" maxlength="4" value="﷼">
-            </div>
-            <div>
-              <label data-i18n="budget">الميزانية</label>
-              <input id="budgetInput" type="number" step="0.01">
-            </div>
-            <div>
-              <button id="saveSettings" class="primary" type="button" data-i18n="save">حفظ</button>
-            </div>
+          <div class="footer">
+            <button id="resetAll" class="danger" type="button" data-i18n="reset_all">إعادة التعيين (مسح الكل)</button>
+            <button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled>تثبيت التطبيق</button>
           </div>
         </div>
+      </div>
+    </div>
 
-
-      </div> <!-- grid -->
-    </div> <!-- container -->
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog card">
+        <div class="modal-header">
+          <h2 data-i18n="settings">الإعدادات</h2>
+          <button id="closeSettings" class="btn" type="button">×</button>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <label data-i18n="language">اللغة</label>
+            <select id="langSelect">
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div>
+            <label data-i18n="currency">العملة</label>
+            <input id="currencyInput" type="text" maxlength="4" value="﷼">
+          </div>
+          <div>
+            <label data-i18n="budget">الميزانية</label>
+            <input id="budgetInput" type="number" step="0.01">
+          </div>
+          <div>
+            <button id="saveSettings" class="primary" type="button" data-i18n="save">حفظ</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script type="module">
       import { applyLang, getInitialLang } from "./i18n.js";
       applyLang(localStorage.getItem("lang") || getInitialLang());
     </script>
-
   </body>
 </html>
