@@ -9,74 +9,186 @@
   <meta name="theme-color" content="#1976d2" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #1976d2;
+      color: #fff;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .controls button {
+      margin-left: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fff;
+      color: #1976d2;
+      font-weight: bold;
+    }
+    main {
+      padding: 1rem;
+    }
+    section {
+      margin-bottom: 1.5rem;
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2, h3 {
+      margin-top: 0;
+    }
+    input, select, button {
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #1976d2;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #125a9e;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    ul li {
+      padding: 0.5rem;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    ul li button {
+      margin-left: 0.5rem;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.9rem;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background: #f1f1f1;
+      margin-top: 1rem;
+    }
+    #adviceBox {
+      padding: 1rem;
+      background: #e3f2fd;
+      border-left: 5px solid #1976d2;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #1976d2;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
+  <div id="app" class="container">
     <header>
-      <h1>💰 مصاريفي</h1>
+      <h1 id="app-title">مصاريفي</h1>
       <div class="controls">
         <button id="langBtn">EN</button>
-        <button id="installBtn" style="display:none;">📲 تثبيت</button>
+        <button id="installBtn" style="display:none;">📲 ثبّت التطبيق</button>
       </div>
     </header>
 
-    <section class="summary card">
-      <h3 id="totalToday">اليوم: 0</h3>
-      <h3 id="totalMonth">الشهر: 0 / الباقي: 0</h3>
-      <label>ميزانية شهرية:</label>
-      <input id="budgetInput" type="number" placeholder="2000" />
-      <button id="setBudgetBtn">💾 حفظ</button>
-    </section>
+    <main>
+      <section class="summary">
+        <div>
+          <h3 id="totalToday">اليوم: 0</h3>
+          <h3 id="totalMonth">الشهر: 0</h3>
+        </div>
+        <div>
+          <label>ميزانية شهرية:</label>
+          <input id="budgetInput" type="number" placeholder="مثلاً 2000" />
+          <select id="currency">
+            <option value="ج.م">ج.م</option>
+            <option value="$">$</option>
+            <option value="€">€</option>
+            <option value="£">£</option>
+          </select>
+          <button id="setBudgetBtn">حفظ</button>
+        </div>
+      </section>
 
-    <section class="add-expense card">
-      <h2>➕ إضافة مصروف</h2>
-      <form id="expenseForm">
-        <input id="eName" type="text" placeholder="اسم المصروف" required />
-        <input id="eAmount" type="number" placeholder="المبلغ" required />
-        <select id="eCategory"></select>
-        <input id="eDate" type="date" />
-        <button type="submit">إضافة</button>
-      </form>
-      <button id="addCategoryBtn">➕ فئة جديدة</button>
-    </section>
+      <section class="advice">
+        <h2>💡 نصائح</h2>
+        <div id="adviceBox">
+          <p id="adviceText">أدخل بياناتك أولاً للحصول على النصائح</p>
+        </div>
+      </section>
 
-    <section class="filters card">
-      <h3>🔍 بحث وفلترة</h3>
-      <input id="search" placeholder="بحث..." />
-      <select id="filterCategory"><option value="all">كل الفئات</option></select>
-    </section>
+      <section class="add-expense">
+        <h2 id="addTitle">إضافة مصروف</h2>
+        <form id="expenseForm">
+          <input id="eName" type="text" placeholder="اسم المصروف" required />
+          <input id="eAmount" type="number" placeholder="المبلغ" required />
+          <select id="eCategory">
+            <option value="food">طعام</option>
+            <option value="transport">مواصلات</option>
+            <option value="bills">فواتير</option>
+            <option value="shopping">تسوق</option>
+            <option value="other">أخرى</option>
+          </select>
+          <input id="eDate" type="date" />
+          <button type="submit">➕ أضف</button>
+        </form>
+      </section>
 
-    <section class="list-and-charts">
-      <div class="list card">
-        <h3>📋 قائمة المصاريف</h3>
-        <ul id="expensesList"></ul>
-      </div>
-      <div class="charts card">
-        <canvas id="pieChart" width="300" height="300"></canvas>
-        <canvas id="barChart" width="300" height="300"></canvas>
-      </div>
-    </section>
+      <section class="list-and-charts">
+        <div class="list">
+          <h3 id="listTitle">قائمة المصاريف</h3>
+          <input id="search" placeholder="🔍 بحث..." />
+          <ul id="expensesList"></ul>
+        </div>
 
-    <section class="actions card">
-      <button id="exportBtn">📤 نسخ احتياطي</button>
-      <button id="importBtn">📥 استعادة</button>
-      <input type="file" id="importFile" style="display:none;" />
-      <button id="resetBtn">🧹 إعادة تعيين</button>
-    </section>
+        <div class="charts">
+          <canvas id="pieChart" width="300" height="300"></canvas>
+          <canvas id="barChart" width="300" height="300"></canvas>
+        </div>
+      </section>
 
-    <section class="advice card">
-      <h3>💡 نصائح</h3>
-      <p id="adviceText">ابدأ بإضافة مصروفاتك اليومية هنا!</p>
-    </section>
+      <section class="actions">
+        <button id="exportBtn">📤 تصدير JSON</button>
+        <button id="resetBtn">♻️ إعادة تعيين</button>
+        <a href="privacy.html" target="_blank">🔒 الخصوصية</a>
+      </section>
+    </main>
 
     <footer>
       <small>© <span id="year"></span> مصاريفي</small>
     </footer>
   </div>
 
+  <!-- ملفات JS -->
+  <script src="config.js"></script>
+  <script src="i18n.js"></script>
+  <script src="utils.js"></script>
   <script src="storage.js"></script>
-  <script src="categories.js"></script>
+  <script src="analytics.js"></script>
+  <script src="ads.js"></script>
   <script src="charts.js"></script>
+  <script src="install.js"></script>
   <script src="app.js"></script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
