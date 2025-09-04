@@ -1,17 +1,9 @@
-let expenses = [];
+const STORAGE_KEY = "masarefy.v1";
 
-function saveData(budget) {
-  const data = { expenses, categories, budget: budget || loadData().budget || 0 };
-  localStorage.setItem("masarefy", JSON.stringify(data));
+function saveAll(state){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-
-function loadData() {
-  return JSON.parse(localStorage.getItem("masarefy") || "{}");
+function loadAll(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch(e){ return {}; }
 }
-
-(function init() {
-  const data = loadData();
-  expenses = data.expenses || [];
-  categories = data.categories || categories;
-  if (data.budget) document.getElementById("budgetInput").value = data.budget;
-})();
