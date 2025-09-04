@@ -15,7 +15,6 @@ export const i18nDict = {
     total_today: "إجمالي اليوم",
     total_month: "إجمالي الشهر",
     top_category: "أكثر تصنيف",
-    reset_all: "إعادة التعيين (مسح الكل)",
     language: "اللغة",
     currency: "العملة",
     budget: "الميزانية",
@@ -29,7 +28,8 @@ export const i18nDict = {
     to: "إلى",
     clear_filters: "مسح المرشحات",
     confirm_reset_title: "تأكيد إعادة التعيين",
-    confirm_reset_msg: "سيتم مسح كل البيانات والتفضيلات. هل أنت متأكد؟"
+    confirm_reset_msg: "سيتم مسح كل البيانات والتفضيلات. هل أنت متأكد؟",
+    tips: "نصائح توفير"
   },
   en: {
     app_title: "My Expenses",
@@ -46,7 +46,6 @@ export const i18nDict = {
     total_today: "Total Today",
     total_month: "Total Month",
     top_category: "Top Category",
-    reset_all: "Reset (Clear All)",
     language: "Language",
     currency: "Currency",
     budget: "Budget",
@@ -60,7 +59,8 @@ export const i18nDict = {
     to: "To",
     clear_filters: "Clear Filters",
     confirm_reset_title: "Confirm Reset",
-    confirm_reset_msg: "All expenses & preferences will be deleted. Continue?"
+    confirm_reset_msg: "All expenses & preferences will be deleted. Continue?",
+    tips: "Savings Tips"
   }
 };
 

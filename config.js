@@ -1,12 +1,10 @@
 
 export const CONFIG = {
   APP_NAME: "My Expenses",
-  VERSION: "1.3.0",
-  CACHE_VERSION: "v1.3.0",
+  VERSION: "1.4.0",
+  CACHE_VERSION: "v1.4.0",
   CURRENCY_SYMBOL: "﷼",
   GA4_MEASUREMENT_ID: "",
   ADS_PROVIDER: "none",
-  ADSENSE_CLIENT_ID: "",
-  ADSENSE_SLOT_BANNER_TOP: "",
-  ADSENSE_SLOT_BANNER_BOTTOM: ""
+  ADSENSE_CLIENT_ID: ""
 };

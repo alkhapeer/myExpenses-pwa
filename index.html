@@ -44,7 +44,7 @@
             </div>
             <div>
               <label id="labelAmount" data-i18n="amount">المبلغ</label>
-              <input type="number" step="0.01" id="amount" name="amount" required>
+              <input type="number" step="0.01" id="amount" name="amount" required inputmode="decimal" lang="en" dir="ltr">
             </div>
             <div>
               <button class="primary" id="submitBtn" type="submit">
@@ -103,12 +103,16 @@
           </div>
         </div>
 
+        <div class="card" id="tipsCard">
+          <h2 data-i18n="tips">نصائح توفير</h2>
+          <ul id="tipsList"></ul>
+        </div>
+
         <div class="card"><canvas id="pieChart" height="120"></canvas></div>
         <div class="card"><canvas id="barChart" height="120"></canvas></div>
 
         <div class="card">
           <div class="footer">
-            <button id="resetAll" class="danger" type="button" data-i18n="reset_all">إعادة التعيين (مسح الكل)</button>
             <button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled>تثبيت التطبيق</button>
           </div>
         </div>

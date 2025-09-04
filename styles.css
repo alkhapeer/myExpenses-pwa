@@ -37,3 +37,7 @@ button.secondary{ background:#1f2937; border-color:#1f2937; }
 
 /* Charts smaller */
 canvas#pieChart, canvas#barChart{ max-height:120px; }
+
+/* Tips list */
+#tipsList{ margin:8px 0 0; padding-inline-start:18px; }
+#tipsList li{ margin:4px 0; color: var(--muted); }
