@@ -1,141 +1,164 @@
+// ====================
+// 📌 app.js
+// ====================
+
+// العناصر
+const expenseForm = document.getElementById("expenseForm");
 const expensesList = document.getElementById("expensesList");
+const totalTodayEl = document.getElementById("totalToday");
+const totalMonthEl = document.getElementById("totalMonth");
+const budgetInput = document.getElementById("budgetInput");
+const setBudgetBtn = document.getElementById("setBudgetBtn");
 const adviceText = document.getElementById("adviceText");
-let editingId = null;
+const resetBtn = document.getElementById("resetBtn");
+const exportBtn = document.getElementById("exportBtn");
+const currencySelect = document.getElementById("currency");
+const searchInput = document.getElementById("search");
 
-function renderExpenses() {
-  expensesList.innerHTML = "";
-  const q = document.getElementById("search").value.toLowerCase();
-  const fCat = document.getElementById("filterCategory").value;
-  expenses.forEach((e, i) => {
-    if ((fCat === "all" || e.category === fCat) &&
-        (e.name.toLowerCase().includes(q) || String(e.amount).includes(q))) {
-      const li = document.createElement("li");
-      li.className = "expense-item";
-      li.innerHTML = `
-        <span>${e.name} - ${e.amount} - ${e.category} - ${e.date}</span>
-        <div>
-          <button onclick="editExpense(${i})">✏️</button>
-          <button onclick="deleteExpense(${i})">🗑️</button>
-        </div>`;
-      expensesList.appendChild(li);
-    }
-  });
-  updateSummary();
-  renderCharts();
-  renderAdvice();
-}
+// البيانات
+let expenses = loadData().expenses || [];
+let budget = loadData().budget || 0;
+let currency = loadData().currency || "ج.م";
 
-function addExpense(name, amount, category, date) {
-  if (editingId !== null) {
-    expenses[editingId] = { name, amount, category, date };
-    editingId = null;
-  } else {
-    expenses.push({ name, amount, category, date });
-  }
-  saveData();
-  renderExpenses();
-}
-
-function deleteExpense(i) {
-  expenses.splice(i, 1);
-  saveData();
-  renderExpenses();
-}
-
-function editExpense(i) {
-  const e = expenses[i];
-  document.getElementById("eName").value = e.name;
-  document.getElementById("eAmount").value = e.amount;
-  document.getElementById("eCategory").value = e.category;
-  document.getElementById("eDate").value = e.date;
-  editingId = i;
-}
-
-function updateSummary() {
-  const today = new Date().toISOString().split("T")[0];
-  let totalToday = 0, totalMonth = 0;
-  const month = today.slice(0, 7);
-  expenses.forEach(e => {
-    if (e.date === today) totalToday += +e.amount;
-    if (e.date.startsWith(month)) totalMonth += +e.amount;
-  });
-  const budget = loadData().budget || 0;
-  document.getElementById("totalToday").textContent = `اليوم: ${totalToday}`;
-  document.getElementById("totalMonth").textContent =
-    `الشهر: ${totalMonth} / الباقي: ${budget - totalMonth}`;
-}
-
-function renderAdvice() {
-  const budget = loadData().budget || 0;
-  const monthSpent = expenses
-    .filter(e => e.date.startsWith(new Date().toISOString().slice(0, 7)))
-    .reduce((s, e) => s + +e.amount, 0);
-  if (budget === 0) {
-    adviceText.textContent = "اضبط ميزانيتك أولاً!";
-  } else if (monthSpent > budget) {
-    adviceText.textContent = "⚠️ تجاوزت ميزانيتك! قلل الإنفاق فوراً.";
-    notify("⚠️ تنبيه من مصاريفي", "لقد تجاوزت ميزانيتك الشهرية!");
-  } else if (monthSpent > budget * 0.7) {
-    adviceText.textContent = "اقتربت من استهلاك 70% من الميزانية.";
-  } else {
-    adviceText.textContent = "ممتاز! استمر في التوفير 👌";
-  }
-}
-
-function backupData() {
-  const data = JSON.stringify({ expenses, categories, budget: loadData().budget });
-  const blob = new Blob([data], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "expenses_backup.json";
-  a.click();
-}
-
-function restoreData(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const data = JSON.parse(e.target.result);
-    expenses = data.expenses || [];
-    categories = data.categories || ["طعام","مواصلات","فواتير"];
-    saveData(data.budget);
-    renderExpenses();
-    renderCategories();
-  };
-  reader.readAsText(file);
-}
-
-function notify(title, body) {
-  if (Notification.permission === "granted") {
-    new Notification(title, { body });
-  }
-}
-
-document.getElementById("expenseForm").addEventListener("submit", e => {
-  e.preventDefault();
-  addExpense(
-    document.getElementById("eName").value,
-    +document.getElementById("eAmount").value,
-    document.getElementById("eCategory").value,
-    document.getElementById("eDate").value || new Date().toISOString().split("T")[0]
-  );
-  e.target.reset();
-});
-
-document.getElementById("exportBtn").addEventListener("click", backupData);
-document.getElementById("importBtn").addEventListener("click", () =>
-  document.getElementById("importFile").click());
-document.getElementById("importFile").addEventListener("change", e =>
-  restoreData(e.target.files[0]));
-document.getElementById("setBudgetBtn").addEventListener("click", () => {
-  saveData(+document.getElementById("budgetInput").value);
-  renderAdvice();
-});
-document.getElementById("search").addEventListener("input", renderExpenses);
-document.getElementById("filterCategory").addEventListener("change", renderExpenses);
-
-if (Notification.permission !== "granted") {
-  Notification.requestPermission();
-}
-
-renderCategories();
+// تهيئة
+budgetInput.value = budget || "";
+currencySelect.value = currency || "ج.م";
 renderExpenses();
+renderSummary();
+renderAdvice();
+renderCharts();
+
+// إضافة مصروف
+expenseForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = document.getElementById("eName").value;
+  const amount = +document.getElementById("eAmount").value;
+  const category = document.getElementById("eCategory").value;
+  const date = document.getElementById("eDate").value || new Date().toISOString().slice(0,10);
+
+  expenses.push({ id: Date.now(), name, amount, category, date });
+  saveData();
+  renderExpenses();
+  renderSummary();
+  renderAdvice();
+  renderCharts();
+  expenseForm.reset();
+});
+
+// تعيين ميزانية
+setBudgetBtn.addEventListener("click", () => {
+  budget = +budgetInput.value || 0;
+  currency = currencySelect.value;
+  saveData();
+  renderSummary();
+  renderAdvice();
+});
+
+// تصدير JSON
+exportBtn.addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(loadData(), null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "expenses-backup.json";
+  a.click();
+});
+
+// إعادة تعيين
+resetBtn.addEventListener("click", () => {
+  if (confirm("هل أنت متأكد من إعادة التعيين؟")) {
+    localStorage.removeItem("masarefy");
+    expenses = [];
+    budget = 0;
+    currency = "ج.م";
+    location.reload();
+  }
+});
+
+// 🔎 البحث
+searchInput.addEventListener("input", () => {
+  renderExpenses(searchInput.value);
+});
+
+// حفظ/تحميل
+function saveData() {
+  localStorage.setItem("masarefy", JSON.stringify({ expenses, budget, currency }));
+}
+function loadData() {
+  return JSON.parse(localStorage.getItem("masarefy") || "{}");
+}
+
+// عرض الملخص
+function renderSummary() {
+  const today = new Date().toISOString().slice(0,10);
+  const month = new Date().toISOString().slice(0,7);
+
+  const todayTotal = expenses.filter(e => e.date === today).reduce((s,e) => s + e.amount, 0);
+  const monthTotal = expenses.filter(e => e.date.startsWith(month)).reduce((s,e) => s + e.amount, 0);
+
+  totalTodayEl.textContent = `اليوم: ${todayTotal} ${currency}`;
+  totalMonthEl.textContent = `الشهر: ${monthTotal} ${currency}`;
+}
+
+// عرض النصائح
+function renderAdvice() {
+  if (!budget) {
+    adviceText.textContent = "⚠️ اضبط ميزانيتك أولاً!";
+    return;
+  }
+  const month = new Date().toISOString().slice(0,7);
+  const monthTotal = expenses.filter(e => e.date.startsWith(month)).reduce((s,e) => s + e.amount, 0);
+  const remaining = budget - monthTotal;
+
+  if (remaining <= 0) {
+    adviceText.textContent = "❌ تجاوزت ميزانيتك! قلل الإنفاق فوراً.";
+  } else if (remaining <= budget * 0.1) {
+    adviceText.textContent = "⚠️ الباقي أقل من 10% من الميزانية!";
+  } else if (remaining <= budget * 0.3) {
+    adviceText.textContent = "ℹ️ اقتربت من استهلاك معظم الميزانية.";
+  } else {
+    adviceText.textContent = "💡 ممتاز! استمر في التوفير 👌";
+  }
+}
+
+// عرض القائمة
+function renderExpenses(query="") {
+  expensesList.innerHTML = "";
+  expenses
+    .filter(e => e.name.includes(query) || e.category.includes(query))
+    .forEach(exp => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${exp.name} - ${exp.amount} ${currency} - ${exp.category} - ${exp.date}
+        <button onclick="editExpense(${exp.id})">✏️</button>
+        <button onclick="deleteExpense(${exp.id})">🗑️</button>
+      `;
+      expensesList.appendChild(li);
+    });
+}
+
+// تعديل
+function editExpense(id) {
+  const exp = expenses.find(e => e.id === id);
+  if (!exp) return;
+  document.getElementById("eName").value = exp.name;
+  document.getElementById("eAmount").value = exp.amount;
+  document.getElementById("eCategory").value = exp.category;
+  document.getElementById("eDate").value = exp.date;
+  expenses = expenses.filter(e => e.id !== id);
+  saveData();
+  renderExpenses();
+  renderCharts();
+}
+
+// حذف
+function deleteExpense(id) {
+  if (confirm("هل تريد حذف هذا المصروف؟")) {
+    expenses = expenses.filter(e => e.id !== id);
+    saveData();
+    renderExpenses();
+    renderSummary();
+    renderAdvice();
+    renderCharts();
+  }
+}
