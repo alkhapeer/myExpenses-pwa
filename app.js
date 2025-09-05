@@ -73,36 +73,58 @@ function bindEvents(){
 
   // Numeral normalization (strong)
   const amountEl = document.getElementById("amount");
-  if (amountEl){
-    const map = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
-    const normalize = (s)=> String(s||"").replace(/[٠-٩۰-۹]/g, ch => map[ch]).replace(',', '.');
-    amountEl.addEventListener("beforeinput", (e)=>{
-      if (e.data){
-        const norm = normalize(e.data);
-        if (norm !== e.data){
-          e.preventDefault();
-          const { selectionStart, selectionEnd, value } = amountEl;
-          const v = value.slice(0, selectionStart) + norm + value.slice(selectionEnd);
-          amountEl.value = v;
-          const pos = (selectionStart||0) + norm.length;
+if (amountEl){
+  const map = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
+               '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+
+  const normalizeAmount = (s) => {
+    let v = String(s || "");
+    v = v.replace(/[٠-٩۰-۹]/g, ch => map[ch]);  // أرقام عربية/فارسيّة → لاتينية
+    v = v.replace(/,/g, '.');                    // فاصلة → نقطة
+    v = v.replace(/[^0-9.]/g, '');               // أزل أي محارف غير رقم/نقطة
+    v = v.replace(/\.{2,}/g, '.');               // نقطة مزدوجة → واحدة
+    // اسمح بنقطة واحدة فقط
+    const firstDot = v.indexOf('.');
+    if (firstDot !== -1) {
+      v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+    }
+    // أزل الأصفار القيادية مثل 01 (لكن اترك 0.5)
+    v = v.replace(/^0+(?=\d)/, '');
+    return v;
+  };
+
+  // قبل الإدخال: نستبدل المحارف المُدخلة فقط ونحافظ على مؤشر الكتابة
+  amountEl.addEventListener("beforeinput", (e) => {
+    if (e.data) {
+      const norm = normalizeAmount(e.data);
+      if (norm !== e.data) {
+        e.preventDefault();
+        const { selectionStart, selectionEnd, value } = amountEl;
+        const newVal = value.slice(0, selectionStart) + norm + value.slice(selectionEnd);
+        const caret = (selectionStart || 0) + norm.length;
+        const finalVal = normalizeAmount(newVal);
+        amountEl.value = finalVal;
+        amountEl.setSelectionRange(Math.min(caret, finalVal.length), Math.min(caret, finalVal.length));
+      }
+    }
+  });
+
+  // مع أي لصق/تغيير/blur: طبّق التطبيع على القيمة كاملة بدون إضافة "00"
+  ["input","change","blur","paste"].forEach(ev => {
+    amountEl.addEventListener(ev, () => {
+      const caret = amountEl.selectionStart;
+      const v = normalizeAmount(amountEl.value);
+      if (amountEl.value !== v) {
+        amountEl.value = v;
+        if (document.activeElement === amountEl && caret != null) {
+          const pos = Math.min(v.length, caret);
           amountEl.setSelectionRange(pos, pos);
         }
       }
     });
-    ["input","change","blur","paste"].forEach(ev=>{
-      amountEl.addEventListener(ev, ()=>{
-        const caret = amountEl.selectionStart;
-        const v = normalize(amountEl.value);
-        if (amountEl.value !== v){
-          amountEl.value = v;
-          if (document.activeElement === amountEl && caret != null){
-            const pos = Math.min(v.length, caret);
-            amountEl.setSelectionRange(pos, pos);
-          }
-        }
-      });
-    });
-  }
+  });
+}
+
 
   // Form submit
   const form = document.getElementById("expenseForm");
