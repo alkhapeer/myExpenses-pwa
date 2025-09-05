@@ -2,43 +2,40 @@
 import { CONFIG } from "./config.js";
 import { i18nDict, getInitialLang, applyLang, t } from "./i18n.js";
 import { uid, formatCurrency, todayISO, parseISO } from "./utils.js";
-import { loadExpenses, saveExpenses, loadPrefs, savePrefs, clearAll } from "./storage.js";
+import { loadExpenses, saveExpenses, loadPrefs, savePrefs, loadCategories, addCategory } from "./storage.js";
 import { renderCharts } from "./charts.js";
-import { initGA, gaEvent } from "./analytics.js";
-import { initAds } from "./ads.js";
 
 let state = {
   expenses: [],
   editingId: null,
   filters: { q: "", from: "", to: "" },
   lang: getInitialLang(),
-  prefs: { currency: CONFIG.CURRENCY_SYMBOL, budget: "" }
+  prefs: { currency: CONFIG.CURRENCY_SYMBOL, budget: "" },
+  savedCats: []
 };
 
 function init(){
-  // language & prefs
-  applyLang(state.lang);
-  const savedPrefs = loadPrefs();
-  state.prefs = { ...state.prefs, ...savedPrefs };
-  const curIn = document.getElementById("currencyInput");
-  const budIn = document.getElementById("budgetInput");
-  if (curIn) curIn.value = state.prefs.currency || "";
-  if (budIn) budIn.value = state.prefs.budget || "";
-
-  // data
-  state.expenses = loadExpenses();
-  const dateEl = document.getElementById("date");
-  if (dateEl) dateEl.value = todayISO();
-  renderAll();
-
-  // integrations
-  initGA(); initAds();
-
-  bindEvents();
+  try{
+    applyLang(state.lang);
+    state.prefs = { ...state.prefs, ...loadPrefs() };
+    state.savedCats = loadCategories();
+    const curIn = document.getElementById("currencyInput");
+    const budIn = document.getElementById("budgetInput");
+    if (curIn) curIn.value = state.prefs.currency || "";
+    if (budIn) budIn.value = state.prefs.budget || "";
+    state.expenses = loadExpenses();
+    const dateEl = document.getElementById("date");
+    if (dateEl) dateEl.value = todayISO();
+    renderCategorySuggestions();
+    bindEvents();
+    renderAll();
+  }catch(err){
+    console.error("Init error:", err);
+  }
 }
 
 function bindEvents(){
-  // Settings modal
+  // Modal
   const openBtn = document.getElementById("openSettings");
   const closeBtn = document.getElementById("closeSettings");
   const modal = document.getElementById("settingsModal");
@@ -46,39 +43,69 @@ function bindEvents(){
   const langSelect = document.getElementById("langSelect");
   const saveSettings = document.getElementById("saveSettings");
 
-  function openModal(){ if (modal){ modal.classList.remove("hidden"); modal.setAttribute("aria-hidden","false"); } }
-  function closeModal(){ if (modal){ modal.classList.add("hidden"); modal.setAttribute("aria-hidden","true"); } }
+  const openModal = ()=>{ if (modal){ modal.classList.remove("hidden"); modal.style.display="block"; modal.setAttribute("aria-hidden","false"); } };
+  const closeModal = ()=>{ if (modal){ modal.classList.add("hidden"); modal.style.display="none"; modal.setAttribute("aria-hidden","true"); } };
   if (openBtn) openBtn.addEventListener("click", openModal);
   if (closeBtn) closeBtn.addEventListener("click", closeModal);
   if (backdrop) backdrop.addEventListener("click", closeModal);
-
-  if (langSelect) langSelect.addEventListener("change", (e)=>{
-    state.lang = e.target.value;
-    applyLang(state.lang);
-    renderAll();
-  });
-
+  if (langSelect) langSelect.addEventListener("change", (e)=>{ state.lang = e.target.value; applyLang(state.lang); renderAll(); });
   if (saveSettings) saveSettings.addEventListener("click", ()=>{
-    state.prefs.currency = document.getElementById("currencyInput").value || state.prefs.currency;
-    state.prefs.budget = document.getElementById("budgetInput").value || "";
+    const c = document.getElementById("currencyInput"); const b = document.getElementById("budgetInput");
+    state.prefs.currency = (c && c.value) || state.prefs.currency;
+    state.prefs.budget = (b && b.value) || "";
     savePrefs(state.prefs);
-    gaEvent("settings_update");
     closeModal();
     renderAll();
   });
 
-  // Normalize amount numerals to ASCII to avoid mixed digits
+  // Save Category
+  const btnSaveCat = document.getElementById("saveCategory");
+  const catInput = document.getElementById("category");
+  if (btnSaveCat && catInput){
+    btnSaveCat.addEventListener("click", ()=>{
+      const name = (catInput.value||"").trim();
+      if (!name) return;
+      addCategory(name);
+      state.savedCats = loadCategories();
+      renderCategorySuggestions();
+    });
+  }
+
+  // Numeral normalization (strong)
   const amountEl = document.getElementById("amount");
   if (amountEl){
     const map = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
-    amountEl.addEventListener("input", (e)=>{
-      e.target.value = e.target.value.replace(/[٠-٩۰-۹]/g, ch => map[ch]).replace(',', '.');
+    const normalize = (s)=> String(s||"").replace(/[٠-٩۰-۹]/g, ch => map[ch]).replace(',', '.');
+    amountEl.addEventListener("beforeinput", (e)=>{
+      if (e.data){
+        const norm = normalize(e.data);
+        if (norm !== e.data){
+          e.preventDefault();
+          const { selectionStart, selectionEnd, value } = amountEl;
+          const v = value.slice(0, selectionStart) + norm + value.slice(selectionEnd);
+          amountEl.value = v;
+          const pos = (selectionStart||0) + norm.length;
+          amountEl.setSelectionRange(pos, pos);
+        }
+      }
+    });
+    ["input","change","blur","paste"].forEach(ev=>{
+      amountEl.addEventListener(ev, ()=>{
+        const caret = amountEl.selectionStart;
+        const v = normalize(amountEl.value);
+        if (amountEl.value !== v){
+          amountEl.value = v;
+          if (document.activeElement === amountEl && caret != null){
+            const pos = Math.min(v.length, caret);
+            amountEl.setSelectionRange(pos, pos);
+          }
+        }
+      });
     });
   }
 
   // Form submit
   const form = document.getElementById("expenseForm");
-  const submitBtn = document.getElementById("submitBtn");
   const cancelEditBtn = document.getElementById("cancelEdit");
   if (form){
     form.addEventListener("submit", (e)=>{
@@ -88,23 +115,20 @@ function bindEvents(){
         date: form.date.value,
         category: form.category.value.trim(),
         description: form.description.value.trim(),
-        amount: Number(form.amount.value || 0)
+        amount: Number((form.amount.value || "0"))
       };
       if (!payload.category){ alert(t("category")); return; }
       if (state.editingId){
         const i = state.expenses.findIndex(x=>x.id===state.editingId);
         if (i>=0) state.expenses[i] = payload;
-        if (state.editingId){
-        const i = state.expenses.findIndex(x=>x.id===state.editingId);
-        if (i>=0) state.expenses[i] = payload;
         state.editingId = null;
-          // رجّع زر الإضافة لوضعه الطبيعي وأخفِ زر الإلغاء
-        } else {
+        const lbl = document.getElementById("submitBtnLabel"); if (lbl) lbl.textContent = t("add_expense");
+        if (cancelEditBtn) cancelEditBtn.classList.add("hidden");
+      }else{
         state.expenses.push(payload);
-        }
-        saveExpenses(state.expenses);
+      }
+      saveExpenses(state.expenses);
       form.reset(); form.date.value = todayISO();
-      // clear search to show the newly added row
       const q = document.getElementById("q"); if (q) q.value = ""; state.filters.q = "";
       renderAll();
     });
@@ -112,7 +136,7 @@ function bindEvents(){
   if (cancelEditBtn){
     cancelEditBtn.addEventListener("click", ()=>{
       state.editingId = null;
-      if (submitBtn) submitBtn.querySelector("#submitBtnLabel").textContent = t("add_expense");
+      const lbl = document.getElementById("submitBtnLabel"); if (lbl) lbl.textContent = t("add_expense");
       cancelEditBtn.classList.add("hidden");
       if (form){ form.reset(); form.date.value = todayISO(); }
     });
@@ -151,21 +175,30 @@ function bindEvents(){
   });
 }
 
+function renderCategorySuggestions(){
+  const list = document.getElementById("categoriesList");
+  if (!list) return;
+  list.innerHTML = "";
+  state.savedCats.forEach(cat=>{
+    const opt = document.createElement("option");
+    opt.value = cat;
+    list.appendChild(opt);
+  });
+}
+
 function startEdit(id){
   const item = state.expenses.find(x=>x.id===id);
   if (!item) return;
   state.editingId = id;
   const form = document.getElementById("expenseForm");
-  const submitBtn = document.getElementById("submitBtn");
-  const cancelEditBtn = document.getElementById("cancelEdit");
   if (form){
     form.date.value = item.date;
     form.category.value = item.category;
     form.description.value = item.description;
     form.amount.value = item.amount;
   }
-  if (submitBtn) submitBtn.querySelector("#submitBtnLabel").textContent = t("update_expense");
-  if (cancelEditBtn) cancelEditBtn.classList.remove("hidden");
+  const lbl = document.getElementById("submitBtnLabel"); if (lbl) lbl.textContent = t("update_expense");
+  const cancelEditBtn = document.getElementById("cancelEdit"); if (cancelEditBtn) cancelEditBtn.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -195,77 +228,12 @@ function summarize(arr){
   return { today, month, topCat };
 }
 
-function adviceTexts(lang){
-  const A = (ar,en)=> (lang==='ar'? ar : en);
-  return {
-    overBudget: (over, top)=> A(
-      `تجاوزت الميزانية بمقدار ${over}. قلّل إنفاق "${top}" هذا الأسبوع.`,
-      `You are over budget by ${over}. Trim "${top}" spending this week.`
-    ),
-    underBudgetDaily: (leftPerDay)=> A(
-      `لتحافظ على الميزانية: متوسط إنفاقك المسموح به يوميًا ≈ ${leftPerDay}.`,
-      `To stay on budget, your daily allowance ≈ ${leftPerDay}.`
-    ),
-    billsTip: A("فواتيرك مرتفعة: راجع الباقات أو بدّل المزوّد لتخفيض التكلفة.","High bills: review plans or switch providers to reduce cost."),
-    debtTip: A("ديون: خصّص دفعة أسبوعية ثابتة وسجّلها كفئة مستقلة لمتابعتها.","Debt: set a fixed weekly payment and track it in its own category."),
-    foodTip: A("طعام: حضّر وجبات أسبوعية وتقليل الطلب من المطاعم لخفض المصروف.","Food: plan meals weekly and cut takeout frequency to save."),
-    transportTip: A("نقل: دمج المشاوير أو استخدام بدائل أرخص يقلّل التكلفة الشهرية.","Transport: batch errands or use cheaper alternatives to cut monthly cost.")
-  };
-}
-
-function renderTips(arr){
-  const tipsList = document.getElementById("tipsList");
-  if (!tipsList) return;
-  tipsList.innerHTML = "";
-  const lang = localStorage.getItem("lang") || "ar";
-  const T = adviceTexts(lang);
-
-  const ym = new Date().toISOString().slice(0,7);
-  const monthArr = arr.filter(x=> x.date && x.date.startsWith(ym));
-  const totalMonth = monthArr.reduce((s,x)=> s + Number(x.amount||0), 0);
-  const budget = Number((loadPrefs().budget||0));
-  const byCat = monthArr.reduce((acc,e)=>{ const k=(e.category||"").trim()||"—"; acc[k]=(acc[k]||0)+Number(e.amount||0); return acc; },{});
-  const topCat = Object.keys(byCat).length ? Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0][0] : (lang==="ar"?"—":"—");
-
-  const fmt = (n)=> (Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
-
-  const out = [];
-  if (budget && totalMonth > budget){
-    out.push(T.overBudget(fmt(totalMonth - budget), topCat));
-  } else if (budget && totalMonth <= budget){
-    const now = new Date();
-    const end = new Date(now.getFullYear(), now.getMonth()+1, 0);
-    const daysLeft = Math.max(1, Math.ceil((end - now)/(1000*60*60*24)));
-    const left = budget - totalMonth;
-    out.push(T.underBudgetDaily(fmt(left / daysLeft)));
-  }
-
-  const cats = Object.keys(byCat).join(" ").toLowerCase();
-  if (/(bill|فواتير)/.test(cats)) out.push(T.billsTip);
-  if (/(دين|ديون|قرض|loan|debt)/.test(cats)) out.push(T.debtTip);
-  if (/(food|مطعم|مطاعم|أكل|وجبات)/.test(cats)) out.push(T.foodTip);
-  if (/(نقل|taxi|uber|transport|gas|بنزين)/.test(cats)) out.push(T.transportTip);
-
-  if (!out.length){
-    if (budget) out.push(lang==="ar" ? "قسّم ميزانيتك أسبوعيًا وتابع الانحراف مبكرًا." : "Split your monthly budget weekly and catch drift early.");
-    out.push(lang==="ar" ? "سجّل كل المصاريف خلال 7 أيام متتالية لرؤية أنماط الهدر." : "Log every expense for 7 straight days to reveal waste patterns.");
-  }
-
-  out.slice(0,5).forEach(txt=>{
-    const li = document.createElement("li");
-    li.textContent = txt;
-    tipsList.appendChild(li);
-  });
-}
-
 function renderAll(){
-  // labels
   const appTitle = document.getElementById("appTitle");
   if (appTitle) appTitle.textContent = t("app_title");
-  const submitBtnLabel = document.getElementById("submitBtnLabel");
-  if (submitBtnLabel) submitBtnLabel.textContent = state.editingId ? t("update_expense") : t("add_expense");
-  const thActions = document.getElementById("thActions");
-  if (thActions) thActions.textContent = t("actions");
+  const lbl = document.getElementById("submitBtnLabel");
+  if (lbl) lbl.textContent = state.editingId ? t("update_expense") : t("add_expense");
+  const thActions = document.getElementById("thActions"); if (thActions) thActions.textContent = t("actions");
   const labelDate = document.getElementById("labelDate"); if (labelDate) labelDate.textContent = t("date");
   const labelCategory = document.getElementById("labelCategory"); if (labelCategory) labelCategory.textContent = t("category");
   const labelDesc = document.getElementById("labelDesc"); if (labelDesc) labelDesc.textContent = t("description");
@@ -284,8 +252,8 @@ function renderAll(){
         <td>${e.description||""}</td>
         <td>${formatCurrency(e.amount, state.prefs.currency)}</td>
         <td>
-          <button class="btn btn-edit" type="button" data-i18n="edit">${t("edit")}</button>
-          <button class="btn btn-del" type="button" data-i18n="delete">${t("delete")}</button>
+          <button class="btn btn-edit" type="button" data-i18n="edit">` + t("edit") + `</button>
+          <button class="btn btn-del" type="button" data-i18n="delete">` + t("delete") + `</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -298,7 +266,6 @@ function renderAll(){
   const sumTopCat = document.getElementById("sumTopCat"); if (sumTopCat) sumTopCat.textContent = topCat;
 
   renderCharts(arr);
-  renderTips(arr);
 }
 
 window.addEventListener("DOMContentLoaded", init);

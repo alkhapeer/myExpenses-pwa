@@ -1,1 +1,1 @@
-self.CONFIG_SW = { CACHE_VERSION: "v1.4.0" };
+self.CONFIG_SW = { CACHE_VERSION: "v1.5.0" };

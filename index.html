@@ -10,15 +10,9 @@
     <link rel="icon" sizes="192x192" href="./icon-192.png">
     <link rel="icon" sizes="512x512" href="./icon-512.png">
     <link rel="stylesheet" href="./styles.css">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
-    <!-- App -->
-    <script type="module" src="./app.js" defer></script>
-    <script type="module">
-      import { wireInstallButton } from "./install.js";
-      window.addEventListener("DOMContentLoaded", wireInstallButton);
-    </script>
     <script type="module" src="./service-worker-register.js" defer></script>
+    <script type="module" src="./app.js" defer></script>
   </head>
   <body>
     <div class="container">
@@ -36,7 +30,10 @@
             </div>
             <div>
               <label id="labelCategory" data-i18n="category">التصنيف</label>
-              <input type="text" id="category" name="category" data-i18n-placeholder="category" placeholder="التصنيف" required>
+              <input type="text" id="category" name="category" list="categoriesList"
+                     data-i18n-placeholder="category" placeholder="التصنيف" required>
+              <datalist id="categoriesList"></datalist>
+              <button id="saveCategory" type="button" class="secondary small-btn" data-i18n="save_category">حفظ التصنيف</button>
             </div>
             <div>
               <label id="labelDesc" data-i18n="description">الوصف</label>
@@ -113,14 +110,15 @@
 
         <div class="card">
           <div class="footer">
-            <button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled>تثبيت التطبيق</button>
+            <button id="btnInstall" class="primary" type="button" data-i18n="install_app" data-installed-text="Installed" disabled title="">تثبيت التطبيق</button>
+            <small id="installHint" data-i18n="install_hint" style="display:block;opacity:.7;margin-top:6px;">التثبيت متاح عندما يسمح المتصفح (HTTPS + دعم)</small>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="modal hidden" aria-hidden="true">
+    <div id="settingsModal" class="modal hidden" aria-hidden="true" style="display:none;">
       <div class="modal-backdrop"></div>
       <div class="modal-dialog card">
         <div class="modal-header">
@@ -152,7 +150,11 @@
 
     <script type="module">
       import { applyLang, getInitialLang } from "./i18n.js";
-      applyLang(localStorage.getItem("lang") || getInitialLang());
+      import { wireInstallButton } from "./install.js";
+      window.addEventListener("DOMContentLoaded", ()=>{
+        applyLang(localStorage.getItem("lang") || getInitialLang());
+        wireInstallButton();
+      });
     </script>
   </body>
 </html>

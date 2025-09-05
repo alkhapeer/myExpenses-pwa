@@ -1,5 +1,4 @@
 
-import { t } from "./i18n.js";
 let pieChart, barChart;
 export function renderCharts(expenses){
   const has = !!window.Chart;

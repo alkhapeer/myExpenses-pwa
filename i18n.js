@@ -21,15 +21,15 @@ export const i18nDict = {
     install_app: "تثبيت التطبيق",
     settings: "الإعدادات",
     save: "حفظ",
-    no_data: "لا توجد بيانات",
+    save_category: "حفظ التصنيف",
+    tips: "نصائح توفير",
     filter: "تصفية",
     search: "بحث",
     from: "من",
     to: "إلى",
     clear_filters: "مسح المرشحات",
-    confirm_reset_title: "تأكيد إعادة التعيين",
-    confirm_reset_msg: "سيتم مسح كل البيانات والتفضيلات. هل أنت متأكد؟",
-    tips: "نصائح توفير"
+    no_data: "لا توجد بيانات",
+    install_hint: "التثبيت متاح عندما يسمح المتصفح (HTTPS + دعم)"
   },
   en: {
     app_title: "My Expenses",
@@ -52,15 +52,15 @@ export const i18nDict = {
     install_app: "Install App",
     settings: "Settings",
     save: "Save",
-    no_data: "No data",
+    save_category: "Save Category",
+    tips: "Savings Tips",
     filter: "Filter",
     search: "Search",
     from: "From",
     to: "To",
     clear_filters: "Clear Filters",
-    confirm_reset_title: "Confirm Reset",
-    confirm_reset_msg: "All expenses & preferences will be deleted. Continue?",
-    tips: "Savings Tips"
+    no_data: "No data",
+    install_hint: "Install appears when the browser allows (HTTPS + support)"
   }
 };
 
@@ -73,13 +73,8 @@ export function getInitialLang() {
 
 export function applyLang(lang) {
   const html = document.documentElement;
-  if (lang === "ar") {
-    html.setAttribute("lang", "ar");
-    html.setAttribute("dir", "rtl");
-  } else {
-    html.setAttribute("lang", "en");
-    html.setAttribute("dir", "ltr");
-  }
+  html.setAttribute("lang", lang);
+  html.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
   const dict = i18nDict[lang];
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
