@@ -28,10 +28,19 @@ canvas#pieChart, canvas#barChart{ max-height:120px; }
 
 #tipsList{ margin:8px 0 0; padding-inline-start:18px; }
 #tipsList li{ margin:4px 0; color: var(--muted); }
-.topbar{
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: var(--bg);
-  padding-block: 8px;
+/* ثبّت زر الإعدادات أعلى الصفحة بدون أي تعديل على الـHTML/JS */
+#openSettings{
+  position: fixed;
+  inset-block-start: 12px;      /* top */
+  inset-inline-end: 12px;       /* right في اللغات LTR */
+  z-index: 1000;
 }
+
+/* في وضع RTL خليه أعلى-يسار */
+html[dir="rtl"] #openSettings{
+  inset-inline-end: auto;
+  inset-inline-start: 12px;
+}
+
+/* حتى لا يتغطّى المحتوى بالزر */
+.container{ padding-top: 56px; }
