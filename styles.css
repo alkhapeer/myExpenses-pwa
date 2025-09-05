@@ -28,19 +28,26 @@ canvas#pieChart, canvas#barChart{ max-height:120px; }
 
 #tipsList{ margin:8px 0 0; padding-inline-start:18px; }
 #tipsList li{ margin:4px 0; color: var(--muted); }
-/* ثبّت زر الإعدادات أعلى الصفحة بدون أي تعديل على الـHTML/JS */
-#openSettings{
-  position: fixed;
-  inset-block-start: 12px;      /* top */
-  inset-inline-end: 12px;       /* right في اللغات LTR */
-  z-index: 1000;
+/* إصلاح تموضع نافذة الإعدادات كطبقة علوية دون تعديل HTML/JS */
+#settingsModal{
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  display: none;
+}
+#settingsModal:not(.hidden){
+  display: flex !important;
+  align-items: flex-start;   /* أعلى الصفحة */
+  justify-content: center;   /* في الوسط أفقيًا */
+}
+#settingsModal .modal-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+}
+#settingsModal .modal-dialog{
+  position: relative;
+  margin-top: 40px;
+  width: min(680px, calc(100% - 24px));
 }
 
-/* في وضع RTL خليه أعلى-يسار */
-html[dir="rtl"] #openSettings{
-  inset-inline-end: auto;
-  inset-inline-start: 12px;
-}
-
-/* حتى لا يتغطّى المحتوى بالزر */
-.container{ padding-top: 56px; }
