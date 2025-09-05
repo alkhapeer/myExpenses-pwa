@@ -228,6 +228,71 @@ function summarize(arr){
   return { today, month, topCat };
 }
 
+
+function adviceTexts(lang){
+  const A = (ar,en)=> (lang==='ar'? ar : en);
+  return {
+    overBudget: (over, top)=> A(
+      `تجاوزت الميزانية بمقدار ${over}. قلّل إنفاق "${top}" هذا الأسبوع.`,
+      `You are over budget by ${over}. Trim "${top}" spending this week.`
+    ),
+    underBudgetDaily: (leftPerDay)=> A(
+      `لتحافظ على الميزانية: متوسط إنفاقك اليومي ≈ ${leftPerDay}.`,
+      `To stay on budget, your daily allowance ≈ ${leftPerDay}.`
+    ),
+    billsTip: A("فواتيرك مرتفعة: راجع الباقات أو بدّل المزوّد.","High bills: review plans or switch providers."),
+    debtTip: A("ديون: خصّص دفعة أسبوعية ثابتة وتابعها كتصنيف مستقل.","Debt: set a fixed weekly payment and track it."),
+    foodTip: A("طعام: خطّط وجبات أسبوعية وقلّل الطلبات الخارجية.","Food: plan meals and cut takeout."),
+    transportTip: A("نقل: دمّج المشاوير أو استخدم بدائل أوفر.","Transport: batch errands or use cheaper options.")
+  };
+}
+
+function renderTips(arr){
+  const tipsList = document.getElementById("tipsList");
+  if (!tipsList) return;
+  tipsList.innerHTML = "";
+  const lang = localStorage.getItem("lang") || "ar";
+  const T = adviceTexts(lang);
+
+  const ym = new Date().toISOString().slice(0,7);
+  const monthArr = arr.filter(x=> x.date && x.date.startsWith(ym));
+  const totalMonth = monthArr.reduce((s,x)=> s + Number(x.amount||0), 0);
+  let budget = 0;
+  try { budget = Number((JSON.parse(localStorage.getItem("prefs")||"{}").budget||0)); } catch(e){ budget=0; }
+  const byCat = monthArr.reduce((acc,e)=>{ const k=(e.category||"").trim()||"—"; acc[k]=(acc[k]||0)+Number(e.amount||0); return acc; },{});
+  const topCat = Object.keys(byCat).length ? Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0][0] : (lang==="ar"?"—":"—");
+
+  const fmt = (n)=> (Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+
+  const out = [];
+  if (budget && totalMonth > budget){
+    out.push(T.overBudget(fmt(totalMonth - budget), topCat));
+  } else if (budget && totalMonth <= budget){
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    const daysLeft = Math.max(1, Math.ceil((end - now)/(1000*60*60*24)));
+    const left = budget - totalMonth;
+    out.push(T.underBudgetDaily(fmt(left / daysLeft)));
+  }
+
+  const cats = Object.keys(byCat).join(" ").toLowerCase();
+  if (/(bill|فواتير)/.test(cats)) out.push(T.billsTip);
+  if (/(دين|ديون|قرض|loan|debt)/.test(cats)) out.push(T.debtTip);
+  if (/(food|مطعم|مطاعم|أكل|وجبات)/.test(cats)) out.push(T.foodTip);
+  if (/(نقل|taxi|uber|transport|gas|بنزين)/.test(cats)) out.push(T.transportTip);
+
+  if (!out.length){
+    if (budget) out.push(lang==="ar" ? "قسّم ميزانيتك أسبوعيًا وتابع الانحراف مبكرًا." : "Split your monthly budget weekly.");
+    out.push(lang==="ar" ? "سجّل كل المصاريف 7 أيام متتالية لرؤية الهدر." : "Log every expense for 7 straight days.");
+  }
+
+  out.slice(0,5).forEach(txt=>{
+    const li = document.createElement("li");
+    li.textContent = txt;
+    tipsList.appendChild(li);
+  });
+}
+
 function renderAll(){
   const appTitle = document.getElementById("appTitle");
   if (appTitle) appTitle.textContent = t("app_title");
@@ -266,6 +331,7 @@ function renderAll(){
   const sumTopCat = document.getElementById("sumTopCat"); if (sumTopCat) sumTopCat.textContent = topCat;
 
   renderCharts(arr);
+  renderTips(arr);
 }
 
 window.addEventListener("DOMContentLoaded", init);
