@@ -4,6 +4,24 @@ import { i18nDict, getInitialLang, applyLang, t } from "./i18n.js";
 import { uid, formatCurrency, todayISO, parseISO } from "./utils.js";
 import { loadExpenses, saveExpenses, loadPrefs, savePrefs, loadCategories, addCategory } from "./storage.js";
 import { renderCharts } from "./charts.js";
+let deferredPrompt;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) installBtn.style.display = "block";
+});
+
+if (installBtn) {
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    console.log("User choice:", choice.outcome);
+    deferredPrompt = null;
+  });
+}
 
 let state = {
   expenses: [],
